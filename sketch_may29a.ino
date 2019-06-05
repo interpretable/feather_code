@@ -23,6 +23,11 @@ char ReplyBuffer[] = "acknowledged";
 const int nMagicPacketLength = 102;
 byte abyMagicPacket[nMagicPacketLength] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
+// Constant for the long/short press
+int held = 0;
+
+char request[] = "shutdown "; // string for shutdown
+
 void setup()
 {
   pinMode(0,OUTPUT);
@@ -51,19 +56,28 @@ void setup()
 void loop()
 {
     boolean a=digitalRead(16);
-    Serial.println(a); // show button status on the monitor
-    delay(1000);
-    
-    if (a==HIGH) // button normally open
+    if (a == LOW)
     {
-      digitalWrite(0,HIGH); 
-    }
-    if (a==LOW) // if button pressed send magic packet
-    {
-      digitalWrite(0,LOW);
-      Udp.beginPacket(broadcastIP, 8888);
-      Udp.write(abyMagicPacket,102);
-      Udp.endPacket();
+      while (a == LOW) // count how long the button is pushed
+      {
+        delay(100);
+        held++;
+        a=digitalRead(16);
+      }
+      Serial.println(held);
+      if (held<30) // if short press
+      {
+        Udp.beginPacket(remote, 8888);
+        Udp.write(abyMagicPacket,102); // send magic packet for WoL 
+        Udp.endPacket();
+      }
+      if (held>29) // if long press
+      {
+        Udp.beginPacket(remote, 8888);
+        Udp.write(request,strlen(request)); // send the string that will be recognize by the python script
+        Udp.endPacket();
+      }
+      held = 0;
     }
 }
 

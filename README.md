@@ -28,6 +28,8 @@ Then we configure the ethernet connection with IPv4 :
 
 We also notice the MAC address of the ethernet port. 
 
+Python 3.6 must be installed on the PC. 
+
 ### Video projector configuration 
 We allow the video projector to wake up when receiving a HDMI signal. 
 This configuration depends on the video projector model. 
@@ -40,6 +42,11 @@ Two lines have to be changed :
 * the MAC address of the ethernet shield 
 * the MAC address of the PC ethernet port 
 
+If the button is pushed less than 3 seconds, a magic packet is sent for the Wake on LAN. 
+If it is pushed more than 3 seconds, the message "shutdown" is sent. The python code "shutdown_listener.py", 
+turning in the background will read this message and shutdown the PC. 
+
 
 ### Use 
-Push for more than 1 second the button, the PC will start with the video projector. 
+Push for less than 3 second the button, the PC will start with the video projector. 
+Push for more than 3 second the button, the PC will shutdown with the video projector. 
