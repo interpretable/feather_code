@@ -24,7 +24,7 @@ First we allow Wake on LAN on the PC (https://www.lifewire.com/wake-on-lan-41498
 Then we configure the ethernet connection with IPv4 : 
 * IP address = 192.168.1.2
 * Mask = 255.255.255.0
-* Gateway = 192.168.1.1
+* Gateway = empty
 
 We also notice the MAC address of the ethernet port. 
 
