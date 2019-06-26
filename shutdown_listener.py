@@ -11,6 +11,6 @@ while True: #listen the port as long as the PC is awake
 	response, addr = sock.recvfrom(255)
 	response_str = response.decode("cp1252") #from bytes to string
 	if len(response_str) == 9 :
-		os.system('shutdown') #shutdown the PC
+		os.system('shutdown now') #shutdown the PC
 
 
