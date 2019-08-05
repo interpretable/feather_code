@@ -1,86 +1,88 @@
-#include <Ethernet.h> // the ethernet library must be compatible with the w5500 chip and the feather huzzah (this one for example : https://github.com/Wiznet/WIZ_Ethernet_Library)
 #include <EthernetUdp.h>
+#include <Ethernet.h>
+#include <SPI.h>
+#include <EEPROM.h>
+
+const int buttonPin = 2;     // the number of the pushbutton pin
+const int ledPin = 13;      // the number of the LED pin
+int buttonState = 0;         // variable for reading the pushbutton status
+int held = 0;
+int ok = 0;
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
-byte mac[] = {
-  0x98, 0x76, 0xB6, 0x11, 0x1F, 0x20
-}; // depends on the ethernet shield 
-byte target_mac[] = {0x94, 0xC6, 0x91, 0x17, 0x6D, 0x5C}; //depends on the target PC
-byte gateway[] = {192,168,1,1};
-byte subnet[] = {255,255,255,0};
+byte mac[] = {0xA8, 0x61, 0x0A, 0xAE, 0x51, 0x94}; // depends on the ethernet shield 
+byte target_mac[] = {0x80, 0xEE, 0x73, 0xCE, 0x83, 0x1F}; //depends on the target  
+
 IPAddress ip(192,168,1,133);
 IPAddress remote(192,168,1,2);
-IPAddress broadcastIP(192, 168, 1, 255);
+IPAddress broadcastIP(192,168,1,255);
+IPAddress gateway(192,168,1,1);
+IPAddress subnet(255,255,255,0);
+
 
 unsigned int localPort = 8888;      // local port to listen on
-
-EthernetUDP Udp;
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE];  // buffer to hold incoming packet,
-char ReplyBuffer[] = "acknowledged";
 
 // Initialize magic packet 
 const int nMagicPacketLength = 102;
 byte abyMagicPacket[nMagicPacketLength] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-// Constant for the long/short press
-int held = 0;
-
 char request[] = "shutdown "; // string for shutdown
 
-void setup()
-{
-  pinMode(0,OUTPUT);
-  Serial.begin(115200); //communication initialization with the baud rate of the feather huzzah
-  
-  // Input for the push button
-  pinMode(16,INPUT); 
-  
-  // disable SD SPI
-  pinMode(4,OUTPUT);
-  digitalWrite(4,HIGH);
+EthernetUDP Udp;
 
-  //enable ethernet
-  pinMode(15, OUTPUT);    // make sure the the ETH controller is enabled
-  digitalWrite(15, LOW);
+void setup() {
   
-  // start the Ethernet and UDP:
-  Ethernet.begin(mac, ip, gateway, gateway, subnet);
-  Udp.begin(localPort);
+  // initialize the LED pin as an output:
+  pinMode(ledPin, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
+  Serial.begin(9600);
+
+  Ethernet.begin(mac,ip,gateway,gateway,subnet);
+  ok = Udp.begin(localPort);
+  Serial.println(ok);
 
   // Make the magic packet for WoL
   for (int ix=6; ix<102; ix++)
       abyMagicPacket[ix]=target_mac[ix%6];
+
+  Serial.println("Initialisation terminée"); 
+  
 }
 
-void loop()
-{
-    boolean a=digitalRead(16);
-    if (a == LOW)
+void loop() {
+
+  
+  // read the state of the pushbutton value:
+  buttonState = digitalRead(buttonPin);
+  delay(100);
+  if (buttonState == LOW)
     {
-      while (a == LOW) // count how long the button is pushed
+      Serial.println("Vous avez appuyé");
+      while (buttonState == LOW) // count how long the button is pushed
       {
         delay(100);
         held++;
-        a=digitalRead(16);
+        buttonState=digitalRead(2);
       }
       Serial.println(held);
+      Serial.println("Statut");
+      Serial.println(ok);
       if (held<30) // if short press
       {
-        Udp.beginPacket(remote, 8888);
-        Udp.write(abyMagicPacket,102); // send magic packet for WoL 
+        Udp.beginPacket(remote, localPort);
+        Udp.write(abyMagicPacket,nMagicPacketLength); // send magic packet for WoL 
         Udp.endPacket();
+        Serial.println("finished 1");
       }
       if (held>29) // if long press
       {
-        Udp.beginPacket(remote, 8888);
+        Udp.beginPacket(remote, localPort);
         Udp.write(request,strlen(request)); // send the string that will be recognize by the python script
         Udp.endPacket();
+        Serial.println("finished 2");
       }
-      held = 0;
+      held=0;
     }
 }
-
-
-
-    
