@@ -60,7 +60,7 @@ void loop() {
   if (buttonState == LOW)
     {
       Serial.println("Vous avez appuyé");
-      while (buttonState == LOW) // count how long the button is pushed
+      while (buttonState == LOW && held<31) // count how long the button is pushed
       {
         delay(100);
         held++;
